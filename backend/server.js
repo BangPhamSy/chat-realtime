@@ -49,13 +49,27 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('Disconnected:' + socket.userId)
     })
-    socket.on('joinRoom', ({ chatroomId })=> {
+    socket.on('joinRoom', async ({ chatroomId })=> {
         socket.join(chatroomId)
-        console.log("A user joined chatroom: " + chatroomId)
+        if(chatroomId) {
+            const user = await User.findOne({ _id: socket.userId})
+            io.to(chatroomId).emit('userJoinRoom', {
+                userName: user.name,
+                status: 1
+            })
+            console.log("A user joined chatroom: " + user.name)
+        }
     })
-    socket.on("leaveRoom", ({ chatroomId }) => {
-        socket.leave(chatroomId);
-        console.log("A user left chatroom: " + chatroomId);
+    socket.on("leaveRoom", async ({ chatroomId }) => {
+        socket.leave(chatroomId)
+        if(chatroomId) {
+            const user = await User.findOne({ _id: socket.userId})
+            io.to(chatroomId).emit('userLeaveRoom', {
+                userName: user.name,
+                status: 0
+            })
+            console.log("A user left chatroom: " + user.name)
+        }
     })
     socket.on('chatroomMessage', async ({ chatroomId, message}) => {
         if(message.trim().length > 0) {
